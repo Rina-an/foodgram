@@ -127,15 +127,19 @@ const RecipeEdit = ({ onItemDelete }) => {
   };
 
   const checkIfDisabled = () => {
-    if (
-      recipeText === "" ||
-      recipeName === "" ||
-      recipeIngredients.length === 0 ||
-      recipeTime === "" ||
-      recipeFile === "" ||
-      recipeFile === null
-    ) {
-      setSubmitError({ submitError: "Заполните все поля!" });
+    const emptyFields = [
+      [recipeName === "", "название"],
+      [recipeIngredients.length === 0, "ингредиенты (выберите из списка и нажмите «Добавить ингредиент»)"],
+      [recipeTime === "", "время приготовления"],
+      [recipeText === "", "описание"],
+      [recipeFile === "" || recipeFile === null, "фото (PNG или JPEG до 5 Мб)"],
+    ]
+      .filter(([isEmpty]) => isEmpty)
+      .map(([, fieldName]) => fieldName);
+    if (emptyFields.length) {
+      setSubmitError({
+        submitError: `Заполните поля: ${emptyFields.join(", ")}`,
+      });
       return true;
     }
 

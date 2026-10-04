@@ -1,0 +1,12 @@
+.git
+.github
+venv
+env
+**/__pycache__
+**/*.pyc
+**/db.sqlite3
+backend/media
+backend/collected_static
+frontend
+postman_collection
+.env
