@@ -50,8 +50,6 @@ foodgram/
 6. Создать тестовые данные (теги, пользователи, рецепты): `python manage.py load_test_data`
 7. `DEBUG=True python manage.py runserver`
 
-Если переменная окружения `POSTGRES_DB` не задана, используется SQLite.
-API будет доступен по адресу `http://127.0.0.1:8000/api/`.
 
 
 ## Как запустить в Docker локально
