@@ -12,7 +12,7 @@ services:
     restart: always
 
   backend:
-    image: ${DOCKERHUB_USERNAME}/foodgram_backend:latest
+    image: ${DOCKER_USERNAME}/foodgram_backend:latest
     env_file: .env
     volumes:
       - static:/backend_static
@@ -22,13 +22,13 @@ services:
     restart: always
 
   frontend:
-    image: ${DOCKERHUB_USERNAME}/foodgram_frontend:latest
+    image: ${DOCKER_USERNAME}/foodgram_frontend:latest
     command: cp -r /app/build/. /frontend_static/
     volumes:
       - static:/frontend_static
 
   gateway:
-    image: ${DOCKERHUB_USERNAME}/foodgram_gateway:latest
+    image: ${DOCKER_USERNAME}/foodgram_gateway:latest
     ports:
       - "8000:80"
     volumes:
