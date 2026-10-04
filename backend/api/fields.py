@@ -6,7 +6,7 @@ from rest_framework import serializers
 
 
 class Base64ImageField(serializers.ImageField):
-    """Поле для загрузки картинки, закодированной в Base64."""
+    """Поле для загрузки картинки в Base64."""
 
     def to_internal_value(self, data):
         if isinstance(data, str) and data.startswith('data:image'):

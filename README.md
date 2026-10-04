@@ -17,48 +17,16 @@
   * `Docker`, `Docker Compose`, `Nginx`, `Gunicorn`, `GitHub Actions`
 
 
-## Структура проекта
 
-```
-foodgram/
-├── backend/                 Django-проект
-│   ├── foodgram/            настройки проекта
-│   ├── users/               пользователи и подписки
-│   ├── recipes/             теги, ингредиенты, рецепты, избранное, список покупок,
-│   │                        короткие ссылки и management-команды
-│   └── api/                 REST API
-│       ├── serializers.py   все сериализаторы API
-│       ├── views.py         все вьюсеты API
-│       ├── filters.py, pagination.py, permissions.py, fields.py
-│       └── urls.py
-├── data/                    ингредиенты (JSON и CSV)
-├── docs/                    спецификация API (ReDoc)
-├── frontend/                React-приложение
-├── infra/                   nginx, Dockerfile шлюза, docker-compose для локального запуска
-├── docker-compose.production.yml
-└── .github/workflows/main.yml
-```
-
-
-## Как запустить локально (без Docker)
-
-Для запуска необходимо в терминале перейти в папку с проектом и выполнить следующие команды:
-
-1. `python3 -m venv venv` (Linux и macOS) или `python -m venv venv` (Windows)
-2. `source venv/bin/activate` (Linux и macOS) или `source venv/Scripts/activate` (Windows)
-3. `pip install -r backend/requirements.txt`
-4. Перейти в папку `backend` и выполнить миграции: `python manage.py migrate`
-5. Загрузить ингредиенты: `python manage.py load_ingredients`
-6. Создать тестовые данные (теги, пользователи, рецепты): `python manage.py load_test_data`
-7. `DEBUG=True python manage.py runserver`
-
-
-
-## Как запустить в Docker локально
-
-1. Создать в корне проекта файл `.env` по образцу `.env.example`.
-2. Перейти в папку `infra` и выполнить `docker compose up --build`.
-3. В соседнем терминале выполнить:
+## Как запустить проект
+1. `git clone https://github.com/Rina-an/foodgram.git`
+2. Перейти в папку проекта `cd <pwd>/foodgram`
+3. Создать виртуальное окружение `python3 -m venv venv`
+4. Активировать его `source venv/bin/activate`
+5. Установить зависимости `pip install -r requirements.txt`
+7. Создать в корне проекта файл `.env` по образцу `.env.example`.
+7. Перейти в папку `infra` и выполнить `docker compose up --build`.
+9. В соседнем терминале выполнить:
 
 ```
 docker compose exec backend python manage.py migrate
@@ -68,55 +36,35 @@ docker compose exec backend python manage.py load_ingredients
 docker compose exec backend python manage.py load_test_data
 ```
 
-Сайт будет доступен по адресу `http://localhost`, спецификация API — `http://localhost/api/docs/`, админка — `http://localhost/admin/`.
+Сайт будет доступен по адресу `https://ktq.servemp3.com/`.
+
+## Переменные окружения
+
+| Переменная          | Назначение                     |
+| ------------------- | ------------------------------ |
+| `POSTGRES_USER`     | Имя пользователя PostgreSQL    |
+| `POSTGRES_PASSWORD` | Пароль пользователя PostgreSQL |
+| `POSTGRES_DB`       | Название базы данных           |
+| `DB_HOST`           | Хост базы данных               |
+| `DB_PORT`           | Порт базы данных               |
+| `SECRET_KEY`        | Секретный ключ Django          |
+| `DEBUG`             | Режим отладки Django           |
+| `ALLOWED_HOSTS`     | Разрешённые домены и IP-адреса |
+
+Файл `.env` не должен добавляться в репозиторий, так как он содержит конфиденциальные данные.
 
 
-## Деплой на сервер (CI/CD)
+## CI/CD
 
-При пуше в ветку `main` GitHub Actions:
+В проекте настроен workflow GitHub Actions, который:
 
-1. проверяет код `flake8`, миграции и запуск проекта на PostgreSQL;
-2. собирает образы `foodgram_backend`, `foodgram_frontend`, `foodgram_gateway` и пушит их в Docker Hub;
-3. копирует `docker-compose.production.yml` на сервер, перезапускает контейнеры, применяет миграции, собирает статику и загружает ингредиенты.
+1. запускает backend-тесты и проверку Flake8;
+2. собирает Docker-образы backend, frontend и gateway;
+3. публикует образы в Docker Hub;
+4. выполняет деплой на сервер;
+5. отправляет уведомление об успешном деплое в Telegram.
 
-### Подготовка сервера
-
-1. Установить Docker и Docker Compose.
-2. Создать папку `~/foodgram` и положить в неё файл `.env` (см. `.env.example`).
-3. Контейнер `gateway` слушает порт `8000`. Во внешнем nginx сервера настроить проксирование:
-
-```
-location / {
-    proxy_set_header Host $http_host;
-    proxy_set_header X-Forwarded-Proto $scheme;
-    proxy_pass http://127.0.0.1:8000;
-}
-```
-
-### Секреты репозитория (Settings → Secrets and variables → Actions)
-
-| Секрет | Значение |
-|---|---|
-| `DOCKER_USERNAME` | логин Docker Hub |
-| `DOCKER_PASSWORD` | пароль или токен Docker Hub |
-| `HOST` | IP-адрес сервера |
-| `USER` | имя пользователя на сервере |
-| `SSH_KEY` | закрытый SSH-ключ |
-| `TELEGRAM_TO` | id пользователя в тг |
-| `TELEGRAM_TOKEN` | токен бота, который пришлет сообщение |
-
-### Тестовые данные на сервере
-
-```
-cd foodgram
-sudo docker compose -f docker-compose.production.yml exec backend python manage.py load_test_data
-```
-
-Команда создаёт теги «Завтрак», «Обед», «Ужин», пользователей с разными уровнями доступа
-(`admin@foodgram.ru` — суперпользователь, `moderator@foodgram.ru` — персонал,
-`ivan@foodgram.ru` и `olga@foodgram.ru` — обычные пользователи) и по одному рецепту от каждого.
-Пароль задаётся переменной окружения `TEST_USERS_PASSWORD` (по умолчанию `Foodgram2026!`).
-
+Сборка и публикация Docker-образов выполняются при push в ветку `main`.
 
 ## Примеры запросов и ответов API
 

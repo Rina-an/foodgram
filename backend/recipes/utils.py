@@ -1,6 +1,6 @@
 from django.http import Http404
 
-SHORT_LINK_BASE = 16
+from recipes.constants import SHORT_LINK_BASE
 
 
 def encode_short_link(recipe_id):

@@ -4,27 +4,25 @@ from django.shortcuts import get_object_or_404
 from django.urls import reverse
 from djoser.views import UserViewSet as BaseUserViewSet
 from rest_framework import generics, status, viewsets
-from rest_framework.permissions import (
-    AllowAny,
-    IsAuthenticated,
-    IsAuthenticatedOrReadOnly,
-)
+from rest_framework.permissions import (AllowAny,
+                                        IsAuthenticated,
+                                        IsAuthenticatedOrReadOnly,
+                                        )
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from api.filters import IngredientFilter, RecipeFilter
 from api.permissions import IsAuthorOrReadOnly
-from api.serializers import (
-    AvatarSerializer,
-    FavoriteSerializer,
-    IngredientSerializer,
-    RecipeReadSerializer,
-    RecipeWriteSerializer,
-    ShoppingCartSerializer,
-    SubscriptionSerializer,
-    TagSerializer,
-    UserWithRecipesSerializer,
-)
+from api.serializers import (AvatarSerializer,
+                             FavoriteSerializer,
+                             IngredientSerializer,
+                             RecipeReadSerializer,
+                             RecipeWriteSerializer,
+                             ShoppingCartSerializer,
+                             SubscriptionSerializer,
+                             TagSerializer,
+                             UserWithRecipesSerializer,
+                             )
 from api.utils import generate_shopping_list
 from recipes.models import Favorite, Ingredient, Recipe, ShoppingCart, Tag
 from recipes.utils import encode_short_link
