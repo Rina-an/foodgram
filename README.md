@@ -18,15 +18,22 @@
 
 
 
+## Проект
+
+* Сайт: [https://ktq.servemp3.com/](https://ktq.servemp3.com/)
+* Документация API: [https://ktq.servemp3.com/api/docs/](https://ktq.servemp3.com/api/docs/)
+* Админка: [https://ktq.servemp3.com/admin/](https://ktq.servemp3.com/admin/) (вход по адресу электронной почты и паролю)
+
 ## Как запустить проект
+
 1. `git clone https://github.com/Rina-an/foodgram.git`
 2. Перейти в папку проекта `cd <pwd>/foodgram`
 3. Создать виртуальное окружение `python3 -m venv venv`
 4. Активировать его `source venv/bin/activate`
 5. Установить зависимости `pip install -r requirements.txt`
-7. Создать в корне проекта файл `.env` по образцу `.env.example`.
+6. Создать в корне проекта файл `.env` по образцу `.env.example`.
 7. Перейти в папку `infra` и выполнить `docker compose up --build`.
-9. В соседнем терминале выполнить:
+8. В соседнем терминале выполнить:
 
 ```
 docker compose exec backend python manage.py migrate
@@ -36,7 +43,7 @@ docker compose exec backend python manage.py load_ingredients
 docker compose exec backend python manage.py load_test_data
 ```
 
-Сайт будет доступен по адресу `https://ktq.servemp3.com/`.
+Локально сайт будет доступен по адресу `http://localhost`, документация API — `http://localhost/api/docs/`.
 
 ## Переменные окружения
 
@@ -68,7 +75,7 @@ docker compose exec backend python manage.py load_test_data
 
 ## Примеры запросов и ответов API
 
-Полная спецификация доступна по адресу `/api/docs/`.
+Полная спецификация доступна по адресу [https://ktq.servemp3.com/api/docs/](https://ktq.servemp3.com/api/docs/).
 
 - POST /api/auth/token/login/
 

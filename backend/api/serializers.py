@@ -1,9 +1,6 @@
 from django.contrib.auth import get_user_model
 from django.db import transaction
-from djoser.serializers import (
-    UserCreateSerializer as BaseUserCreateSerializer,
-    UserSerializer as BaseUserSerializer,
-)
+from djoser.serializers import UserSerializer as BaseUserSerializer
 from rest_framework import serializers
 from rest_framework.validators import UniqueTogetherValidator
 
@@ -25,23 +22,6 @@ from recipes.models import (
 from users.models import Subscription
 
 User = get_user_model()
-
-
-class UserCreateSerializer(BaseUserCreateSerializer):
-    """
-    Класс сериалайзера для регистрации пользователя.
-    """
-
-    class Meta(BaseUserCreateSerializer.Meta):
-        model = User
-        fields = (
-            'email',
-            'id',
-            'username',
-            'first_name',
-            'last_name',
-            'password',
-        )
 
 
 class UserSerializer(BaseUserSerializer):
@@ -226,6 +206,14 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
             'text',
             'cooking_time',
         )
+
+    def validate_image(self, value):
+        """Метод для проверки картинки на пустоту."""
+        if not value:
+            raise serializers.ValidationError(
+                'Поле изображения не может быть пустым.'
+            )
+        return value
 
     def validate(self, data):
         """

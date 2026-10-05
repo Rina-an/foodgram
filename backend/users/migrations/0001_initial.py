@@ -4,7 +4,6 @@ import django.contrib.auth.models
 import django.contrib.auth.validators
 import django.db.models.deletion
 import django.utils.timezone
-import users.validators
 from django.conf import settings
 from django.db import migrations, models
 
@@ -82,7 +81,6 @@ class Migration(migrations.Migration):
                         unique=True,
                         validators=[
                             django.contrib.auth.validators.UnicodeUsernameValidator(),
-                            users.validators.validate_username_not_me,
                         ],
                         verbose_name="Имя пользователя",
                     ),

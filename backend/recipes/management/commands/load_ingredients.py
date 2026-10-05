@@ -2,21 +2,22 @@ import csv
 import json
 from pathlib import Path
 
-from django.conf import settings
 from django.core.management.base import BaseCommand, CommandError
 
+from recipes.constants import (DATA_DIR_NAME,
+                               INGREDIENTS_FILE,
+                               INGREDIENTS_PATHS,
+                               )
 from recipes.models import Ingredient
-
-DEFAULT_PATHS = (
-    settings.BASE_DIR / 'data' / 'ingredients.json',
-    settings.BASE_DIR.parent / 'data' / 'ingredients.json',
-)
 
 
 class Command(BaseCommand):
     """Загружает ингредиенты из JSON или CSV файла."""
 
-    help = 'Загрузка ингредиентов из data/ingredients.json (или .csv)'
+    help = (
+        f'Загрузка ингредиентов из {DATA_DIR_NAME}/{INGREDIENTS_FILE} '
+        '(или файла, указанного в --path, в формате JSON или CSV)'
+    )
 
     def add_arguments(self, parser):
         parser.add_argument(
@@ -31,10 +32,12 @@ class Command(BaseCommand):
             if not path.exists():
                 raise CommandError(f'Файл {path} не найден.')
             return path
-        for default_path in DEFAULT_PATHS:
+        for default_path in INGREDIENTS_PATHS:
             if default_path.exists():
                 return default_path
-        raise CommandError('Файл ingredients.json не найден, укажите --path.')
+        raise CommandError(
+            f'Файл {INGREDIENTS_FILE} не найден, укажите --path.'
+        )
 
     @staticmethod
     def read_rows(path):

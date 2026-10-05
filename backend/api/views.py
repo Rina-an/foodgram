@@ -1,114 +1,26 @@
-from django.contrib.auth import get_user_model
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
 from django.urls import reverse
-from djoser.views import UserViewSet as BaseUserViewSet
-from rest_framework import generics, status, viewsets
+from rest_framework import status, viewsets
+from rest_framework.decorators import action
 from rest_framework.permissions import (AllowAny,
                                         IsAuthenticated,
                                         IsAuthenticatedOrReadOnly,
                                         )
 from rest_framework.response import Response
-from rest_framework.views import APIView
 
 from api.filters import IngredientFilter, RecipeFilter
 from api.permissions import IsAuthorOrReadOnly
-from api.serializers import (AvatarSerializer,
-                             FavoriteSerializer,
+from api.serializers import (FavoriteSerializer,
                              IngredientSerializer,
                              RecipeReadSerializer,
                              RecipeWriteSerializer,
                              ShoppingCartSerializer,
-                             SubscriptionSerializer,
                              TagSerializer,
-                             UserWithRecipesSerializer,
                              )
 from api.utils import generate_shopping_list
 from recipes.models import Favorite, Ingredient, Recipe, ShoppingCart, Tag
 from recipes.utils import encode_short_link
-
-User = get_user_model()
-
-
-class UserViewSet(BaseUserViewSet):
-    """
-    Вьюсет для пользователей на основе Djoser.
-    """
-
-    def get_permissions(self):
-        """Метод закрывает эндпоинт me для анонимных пользователей."""
-        if self.action == 'me':
-            return (IsAuthenticated(),)
-        return super().get_permissions()
-
-
-class AvatarView(APIView):
-    """
-    Вью для добавления и удаления аватара текущего пользователя.
-    """
-
-    permission_classes = (IsAuthenticated,)
-
-    def put(self, request):
-        """Метод добавляет или заменяет аватар."""
-        serializer = AvatarSerializer(
-            request.user,
-            data=request.data,
-            context={'request': request}
-        )
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
-        return Response(serializer.data)
-
-    def delete(self, request):
-        """Метод удаляет аватар."""
-        request.user.avatar.delete(save=True)
-        return Response(status=status.HTTP_204_NO_CONTENT)
-
-
-class SubscriptionListView(generics.ListAPIView):
-    """
-    Вью для списка авторов, на которых подписан пользователь.
-    """
-
-    serializer_class = UserWithRecipesSerializer
-    permission_classes = (IsAuthenticated,)
-
-    def get_queryset(self):
-        """Метод для получения авторов из подписок пользователя."""
-        return User.objects.filter(subscribers__user=self.request.user)
-
-
-class SubscribeView(APIView):
-    """
-    Вью для оформления и отмены подписки на автора.
-    """
-
-    permission_classes = (IsAuthenticated,)
-
-    def post(self, request, user_id):
-        """Метод оформляет подписку на автора."""
-        author = get_object_or_404(User, pk=user_id)
-        serializer = SubscriptionSerializer(
-            data={'user': request.user.id, 'author': author.id},
-            context={'request': request}
-        )
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
-
-    def delete(self, request, user_id):
-        """Метод отменяет подписку на автора."""
-        author = get_object_or_404(User, pk=user_id)
-        deleted, _ = request.user.subscriptions.filter(
-            author=author
-        ).delete()
-        if not deleted:
-            return Response(
-                {'errors': 'Вы не подписаны на этого пользователя.'},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-        return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 class TagViewSet(viewsets.ReadOnlyModelViewSet):
@@ -137,6 +49,8 @@ class IngredientViewSet(viewsets.ReadOnlyModelViewSet):
 class RecipeViewSet(viewsets.ModelViewSet):
     """
     Вьюсет для рецептов.
+
+    Также отвечает за избранное, список покупок и короткие ссылки.
     """
 
     queryset = Recipe.objects.select_related('author').prefetch_related(
@@ -157,22 +71,10 @@ class RecipeViewSet(viewsets.ModelViewSet):
         """Метод пишет авторство автоматически при создании рецепта."""
         serializer.save(author=self.request.user)
 
-
-class UserRecipeView(APIView):
-    """
-    Базовая вью для добавления рецепта в список пользователя и удаления.
-
-    Наследники задают serializer_class и model.
-    """
-
-    permission_classes = (IsAuthenticated,)
-    serializer_class = None
-    model = None
-
-    def post(self, request, recipe_id):
-        """Метод добавляет рецепт в список пользователя."""
-        recipe = get_object_or_404(Recipe, pk=recipe_id)
-        serializer = self.serializer_class(
+    def add_to_list(self, serializer_class, request, pk):
+        """Метод добавляет рецепт в избранное или список покупок."""
+        recipe = get_object_or_404(Recipe, pk=pk)
+        serializer = serializer_class(
             data={'user': request.user.id, 'recipe': recipe.id},
             context={'request': request}
         )
@@ -180,10 +82,10 @@ class UserRecipeView(APIView):
         serializer.save()
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
-    def delete(self, request, recipe_id):
-        """Метод удаляет рецепт из списка пользователя."""
-        recipe = get_object_or_404(Recipe, pk=recipe_id)
-        deleted, _ = self.model.objects.filter(
+    def remove_from_list(self, model, request, pk):
+        """Метод удаляет рецепт из избранного или списка покупок."""
+        recipe = get_object_or_404(Recipe, pk=pk)
+        deleted, _ = model.objects.filter(
             user=request.user,
             recipe=recipe
         ).delete()
@@ -194,34 +96,41 @@ class UserRecipeView(APIView):
             )
         return Response(status=status.HTTP_204_NO_CONTENT)
 
+    @action(
+        detail=True,
+        methods=('post',),
+        permission_classes=(IsAuthenticated,)
+    )
+    def favorite(self, request, pk=None):
+        """Метод добавляет рецепт в избранное."""
+        return self.add_to_list(FavoriteSerializer, request, pk)
 
-class FavoriteView(UserRecipeView):
-    """
-    Вью для избранного.
-    """
+    @favorite.mapping.delete
+    def delete_favorite(self, request, pk=None):
+        """Метод удаляет рецепт из избранного."""
+        return self.remove_from_list(Favorite, request, pk)
 
-    serializer_class = FavoriteSerializer
-    model = Favorite
+    @action(
+        detail=True,
+        methods=('post',),
+        permission_classes=(IsAuthenticated,)
+    )
+    def shopping_cart(self, request, pk=None):
+        """Метод добавляет рецепт в список покупок."""
+        return self.add_to_list(ShoppingCartSerializer, request, pk)
 
+    @shopping_cart.mapping.delete
+    def delete_shopping_cart(self, request, pk=None):
+        """Метод удаляет рецепт из списка покупок."""
+        return self.remove_from_list(ShoppingCart, request, pk)
 
-class ShoppingCartView(UserRecipeView):
-    """
-    Вью для списка покупок.
-    """
-
-    serializer_class = ShoppingCartSerializer
-    model = ShoppingCart
-
-
-class DownloadShoppingCartView(APIView):
-    """
-    Вью для скачивания списка покупок текстовым файлом.
-    """
-
-    permission_classes = (IsAuthenticated,)
-
-    def get(self, request):
-        """Метод отдаёт файл со списком покупок."""
+    @action(
+        detail=False,
+        methods=('get',),
+        permission_classes=(IsAuthenticated,)
+    )
+    def download_shopping_cart(self, request):
+        """Метод отдаёт список покупок текстовым файлом."""
         response = HttpResponse(
             generate_shopping_list(request.user),
             content_type='text/plain; charset=utf-8'
@@ -231,17 +140,15 @@ class DownloadShoppingCartView(APIView):
         )
         return response
 
-
-class RecipeShortLinkView(APIView):
-    """
-    Вью для получения короткой ссылки на рецепт.
-    """
-
-    permission_classes = (AllowAny,)
-
-    def get(self, request, recipe_id):
+    @action(
+        detail=True,
+        methods=('get',),
+        url_path='get-link',
+        permission_classes=(AllowAny,)
+    )
+    def get_link(self, request, pk=None):
         """Метод возвращает короткую ссылку на рецепт."""
-        recipe = get_object_or_404(Recipe, pk=recipe_id)
+        recipe = get_object_or_404(Recipe, pk=pk)
         short_link = request.build_absolute_uri(
             reverse('recipes:short_link', args=(encode_short_link(recipe.pk),))
         )
