@@ -96,11 +96,10 @@ class RecipeViewSet(viewsets.ModelViewSet):
             )
         return Response(status=status.HTTP_204_NO_CONTENT)
 
-    @action(
-        detail=True,
-        methods=('post',),
-        permission_classes=(IsAuthenticated,)
-    )
+    @action(detail=True,
+            methods=('post',),
+            permission_classes=(IsAuthenticated,)
+            )
     def favorite(self, request, pk=None):
         """Метод добавляет рецепт в избранное."""
         return self.add_to_list(FavoriteSerializer, request, pk)
@@ -110,11 +109,10 @@ class RecipeViewSet(viewsets.ModelViewSet):
         """Метод удаляет рецепт из избранного."""
         return self.remove_from_list(Favorite, request, pk)
 
-    @action(
-        detail=True,
-        methods=('post',),
-        permission_classes=(IsAuthenticated,)
-    )
+    @action(detail=True,
+            methods=('post',),
+            permission_classes=(IsAuthenticated,)
+            )
     def shopping_cart(self, request, pk=None):
         """Метод добавляет рецепт в список покупок."""
         return self.add_to_list(ShoppingCartSerializer, request, pk)
@@ -124,11 +122,10 @@ class RecipeViewSet(viewsets.ModelViewSet):
         """Метод удаляет рецепт из списка покупок."""
         return self.remove_from_list(ShoppingCart, request, pk)
 
-    @action(
-        detail=False,
-        methods=('get',),
-        permission_classes=(IsAuthenticated,)
-    )
+    @action(detail=False,
+            methods=('get',),
+            permission_classes=(IsAuthenticated,)
+            )
     def download_shopping_cart(self, request):
         """Метод отдаёт список покупок текстовым файлом."""
         response = HttpResponse(
@@ -140,12 +137,11 @@ class RecipeViewSet(viewsets.ModelViewSet):
         )
         return response
 
-    @action(
-        detail=True,
-        methods=('get',),
-        url_path='get-link',
-        permission_classes=(AllowAny,)
-    )
+    @action(detail=True,
+            methods=('get',),
+            url_path='get-link',
+            permission_classes=(AllowAny,)
+            )
     def get_link(self, request, pk=None):
         """Метод возвращает короткую ссылку на рецепт."""
         recipe = get_object_or_404(Recipe, pk=pk)

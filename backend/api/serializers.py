@@ -5,20 +5,18 @@ from rest_framework import serializers
 from rest_framework.validators import UniqueTogetherValidator
 
 from api.fields import Base64ImageField
-from recipes.constants import (
-    MAX_AMOUNT,
-    MAX_COOKING_TIME,
-    MIN_AMOUNT,
-    MIN_COOKING_TIME,
-)
-from recipes.models import (
-    Favorite,
-    Ingredient,
-    Recipe,
-    RecipeIngredient,
-    ShoppingCart,
-    Tag,
-)
+from recipes.constants import (MAX_AMOUNT,
+                               MAX_COOKING_TIME,
+                               MIN_AMOUNT,
+                               MIN_COOKING_TIME,
+                               )
+from recipes.models import (Favorite,
+                            Ingredient,
+                            Recipe,
+                            RecipeIngredient,
+                            ShoppingCart,
+                            Tag,
+                            )
 from users.models import Subscription
 
 User = get_user_model()

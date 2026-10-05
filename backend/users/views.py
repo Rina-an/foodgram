@@ -24,10 +24,9 @@ class UserViewSet(BaseUserViewSet):
     Добавляет аватар, подписки и список подписок.
     """
 
-    permission_classes = (
-        IsAuthenticatedOrReadOnly,
-        IsCurrentUserOrAdminOrReadOnly,
-    )
+    permission_classes = (IsAuthenticatedOrReadOnly,
+                          IsCurrentUserOrAdminOrReadOnly,
+                          )
 
     def get_permissions(self):
         """Метод закрывает эндпоинт me для анонимных пользователей."""
@@ -35,12 +34,11 @@ class UserViewSet(BaseUserViewSet):
             return (IsAuthenticated(),)
         return super().get_permissions()
 
-    @action(
-        detail=False,
-        methods=('put',),
-        url_path='me/avatar',
-        permission_classes=(IsAuthenticated,)
-    )
+    @action(detail=False,
+            methods=('put',),
+            url_path='me/avatar',
+            permission_classes=(IsAuthenticated,)
+            )
     def avatar(self, request):
         """Метод добавляет или заменяет аватар текущего пользователя."""
         serializer = AvatarSerializer(
@@ -58,11 +56,10 @@ class UserViewSet(BaseUserViewSet):
         request.user.avatar.delete(save=True)
         return Response(status=status.HTTP_204_NO_CONTENT)
 
-    @action(
-        detail=False,
-        methods=('get',),
-        permission_classes=(IsAuthenticated,)
-    )
+    @action(detail=False,
+            methods=('get',),
+            permission_classes=(IsAuthenticated,)
+            )
     def subscriptions(self, request):
         """Метод возвращает авторов, на которых подписан пользователь."""
         authors = User.objects.filter(subscribers__user=request.user)
@@ -74,11 +71,10 @@ class UserViewSet(BaseUserViewSet):
         )
         return self.get_paginated_response(serializer.data)
 
-    @action(
-        detail=True,
-        methods=('post',),
-        permission_classes=(IsAuthenticated,)
-    )
+    @action(detail=True,
+            methods=('post',),
+            permission_classes=(IsAuthenticated,)
+            )
     def subscribe(self, request, id=None):
         """Метод оформляет подписку на автора."""
         author = get_object_or_404(User, pk=id)
