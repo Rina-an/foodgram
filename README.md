@@ -43,8 +43,6 @@ docker compose exec backend python manage.py load_ingredients
 docker compose exec backend python manage.py load_test_data
 ```
 
-Локально сайт будет доступен по адресу `http://localhost`, документация API — `http://localhost/api/docs/`.
-
 ## Переменные окружения
 
 | Переменная          | Назначение                     |
