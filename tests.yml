@@ -2,7 +2,6 @@ login: admin@foodgram.ru
 password: Foodgram2026!
 vm_name: r-backend-vm-900639762
 
-# Значия для: админского доступа на сервере
-# login: review
-# password: review1admin
-# email: review@admin.ru
+server_login: review
+server_password: review1admin
+server_email: review@admin.ru
